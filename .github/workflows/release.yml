@@ -1,0 +1,170 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+    paths: ['Cargo.toml']
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry run (verify only, do not publish or tag)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+env:
+  CARGO_TERM_COLOR: always
+  RUSTFLAGS: -D warnings
+
+jobs:
+  prepare:
+    name: Prepare release
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.meta.outputs.version }}
+      crate: ${{ steps.meta.outputs.crate }}
+      should_publish: ${{ steps.check.outputs.should_publish }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Read crate metadata
+        id: meta
+        run: |
+          set -euo pipefail
+          pkgid=$(cargo pkgid)
+          version="${pkgid##*#}"
+          rest="${pkgid%#*}"
+          crate="${rest##*/}"
+          echo "crate=$crate"     >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "Crate: $crate"
+          echo "Version: $version"
+
+      - name: Check crates.io for existing version
+        id: check
+        env:
+          CRATE: ${{ steps.meta.outputs.crate }}
+          VERSION: ${{ steps.meta.outputs.version }}
+          EVENT: ${{ github.event_name }}
+        run: |
+          set -euo pipefail
+          status=$(curl -sSL -o /dev/null -w '%{http_code}' \
+            -H "User-Agent: ${CRATE}-release-workflow (github actions)" \
+            "https://crates.io/api/v1/crates/${CRATE}/${VERSION}")
+          case "$status" in
+            200)
+              if [ "$EVENT" = "workflow_dispatch" ]; then
+                echo "::error::Version ${VERSION} of ${CRATE} is already published. Bump the version in Cargo.toml."
+                exit 1
+              fi
+              echo "::notice::Version ${VERSION} already on crates.io; skipping publish."
+              echo "should_publish=false" >> "$GITHUB_OUTPUT"
+              ;;
+            404)
+              echo "Version ${VERSION} is new; will publish."
+              echo "should_publish=true" >> "$GITHUB_OUTPUT"
+              ;;
+            *)
+              echo "::error::Unexpected HTTP $status from crates.io while checking ${CRATE}/${VERSION}."
+              exit 1
+              ;;
+          esac
+
+      - name: Build and test
+        if: steps.check.outputs.should_publish == 'true'
+        run: |
+          cargo build --all-targets --verbose
+          cargo test --verbose
+
+      - name: Verify package (cargo publish --dry-run)
+        if: steps.check.outputs.should_publish == 'true'
+        run: cargo publish --dry-run
+
+  publish:
+    name: Publish to crates.io
+    needs: prepare
+    if: needs.prepare.outputs.should_publish == 'true'
+    runs-on: ubuntu-latest
+    environment:
+      name: crates-io
+      url: https://crates.io/crates/${{ needs.prepare.outputs.crate }}/${{ needs.prepare.outputs.version }}
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Publish (dry run)
+        if: ${{ inputs.dry_run }}
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        run: cargo publish --dry-run
+
+      - name: Publish
+        if: ${{ !inputs.dry_run }}
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        run: cargo publish
+
+      - name: Create GitHub release
+        if: ${{ !inputs.dry_run }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ needs.prepare.outputs.version }}
+        run: |
+          set -euo pipefail
+          case "$VERSION" in
+            *-*) prerelease=(--prerelease) ;;
+            *)   prerelease=() ;;
+          esac
+
+          prev=$(git tag -l 'v*' --sort=-v:refname | grep -v "^v${VERSION}$" | head -n1 || true)
+          range="${prev:+${prev}..}HEAD"
+
+          declare -a breaking=() features=() fixes=() docs=() other=()
+          while IFS=$'\t' read -r sha subject; do
+            line="- ${subject} (${sha:0:7})"
+            if [[ "$subject" == *!:* ]] || [[ "$subject" == *"BREAKING CHANGE"* ]]; then
+              breaking+=("$line")
+              continue
+            fi
+            prefix="${subject%%[(:]*}"
+            case "$prefix" in
+              feat)                                    features+=("$line") ;;
+              fix)                                     fixes+=("$line") ;;
+              docs)                                    docs+=("$line") ;;
+              chore|ci|test|refactor|style|build|perf) ;;
+              *)                                       other+=("$line") ;;
+            esac
+          done < <(git log --pretty='format:%H%x09%s' "$range")
+
+          body=""
+          append_section() {
+            local title=$1; shift
+            [ "$#" -gt 0 ] || return 0
+            body+="## ${title}"$'\n\n'
+            for item in "$@"; do body+="${item}"$'\n'; done
+            body+=$'\n'
+          }
+          append_section "Breaking Changes" ${breaking[@]+"${breaking[@]}"}
+          append_section "Features"         ${features[@]+"${features[@]}"}
+          append_section "Bug Fixes"        ${fixes[@]+"${fixes[@]}"}
+          append_section "Documentation"    ${docs[@]+"${docs[@]}"}
+          append_section "Other"            ${other[@]+"${other[@]}"}
+          [ -n "$body" ] || body="No notable changes."
+
+          gh release create "v${VERSION}" \
+            --title "v${VERSION}" \
+            --target "${GITHUB_SHA}" \
+            --notes "$body" \
+            "${prerelease[@]}"
