@@ -110,7 +110,7 @@ struct FuseBuilder<'a> {
 }
 
 impl<'a> FuseBuilder<'a> {
-    fn new(buf: &mut String) -> FuseBuilder {
+    fn new(buf: &mut String) -> FuseBuilder<'_> {
         FuseBuilder {
             buf,
             checksum: CheckSummer::new(),
