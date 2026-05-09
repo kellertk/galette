@@ -123,8 +123,8 @@ jobs:
         run: |
           set -euo pipefail
           case "$VERSION" in
-            *-*) prerelease=(--prerelease) ;;
-            *)   prerelease=() ;;
+            *-alpha*|*-beta*|*-rc*|*-pre*|*-dev*) prerelease=(--prerelease) ;;
+            *)                                    prerelease=() ;;
           esac
 
           prev=$(git tag -l 'v*' --sort=-v:refname | grep -v "^v${VERSION}$" | head -n1 || true)
