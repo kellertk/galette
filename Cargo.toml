@@ -1,6 +1,6 @@
 [package]
 name = "galette-tk"
-version = "0.4.0-tk"
+version = "0.3.0-tk"
 authors = ["Tom Keller <tom@tompkel.net>"]
 edition = "2024"
 license = "MIT"
