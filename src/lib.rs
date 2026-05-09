@@ -25,7 +25,16 @@ pub fn assemble(file_name: &str, config: &writer::Config) -> Result<(), errors::
     (|| {
         let content = parser::parse(file_name)?;
         let blueprint = blueprint::Blueprint::from(&content)?;
-        let gal = gal_builder::build(&blueprint)?;
+
+        if config.disable_unused_pt && !blueprint.chip.has_ptd_fuses() {
+            eprintln!(
+                "{}: warning: --ptd has no effect on {} (PTD fuses only exist on GAL16V8/GAL20V8)",
+                file_name,
+                blueprint.chip.name()
+            );
+        }
+
+        let gal = gal_builder::build(&blueprint, config.disable_unused_pt)?;
         writer::write_files(file_name, config, &blueprint.pins, &blueprint.olmcs, &gal).unwrap();
 
         Ok(())

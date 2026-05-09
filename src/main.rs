@@ -49,6 +49,12 @@ fn main() {
                 .help("Disable .pin file output")
                 .action(ArgAction::SetTrue),
         )
+        .arg(
+            Arg::new("ptd")
+                .long("ptd")
+                .help("Set product term disable bits (16V8/20V8 only)")
+                .action(ArgAction::SetTrue),
+        )
         .get_matches();
 
     let file_name = matches.get_one::<String>("INPUT.pld").unwrap();
@@ -58,6 +64,7 @@ fn main() {
         gen_chip: !matches.get_flag("nochip"),
         gen_pin: !matches.get_flag("nopin"),
         jedec_sec_bit: matches.get_flag("secure"),
+        disable_unused_pt: matches.get_flag("ptd"),
     };
 
     if let Err(e) = galette::assemble(file_name, &config) {

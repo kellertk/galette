@@ -12,11 +12,11 @@ use crate::{
     gal::{self, Bounds, Mode, GAL},
 };
 
-pub fn build(blueprint: &Blueprint) -> Result<GAL, Error> {
+pub fn build(blueprint: &Blueprint, disable_unused_pt: bool) -> Result<GAL, Error> {
     let mut gal = GAL::new(blueprint.chip);
 
     match gal.chip {
-        Chip::GAL16V8 | Chip::GAL20V8 => build_galxv8(&mut gal, blueprint)?,
+        Chip::GAL16V8 | Chip::GAL20V8 => build_galxv8(&mut gal, blueprint, disable_unused_pt)?,
         Chip::GAL22V10 => build_gal22v10(&mut gal, blueprint)?,
         Chip::GAL20RA10 => build_gal20ra10(&mut gal, blueprint)?,
     }
@@ -28,7 +28,11 @@ pub fn build(blueprint: &Blueprint) -> Result<GAL, Error> {
 // Chip-specific GAL-building algorithms.
 //
 
-fn build_galxv8(gal: &mut GAL, blueprint: &Blueprint) -> Result<(), Error> {
+fn build_galxv8(
+    gal: &mut GAL,
+    blueprint: &Blueprint,
+    disable_unused_pt: bool,
+) -> Result<(), Error> {
     check_not_gal20ra10(blueprint)?;
     set_sig(gal, blueprint);
     set_mode(gal, blueprint);
@@ -38,7 +42,7 @@ fn build_galxv8(gal: &mut GAL, blueprint: &Blueprint) -> Result<(), Error> {
     set_tristate(gal, blueprint, com_is_tri);
     set_xors(gal, blueprint);
     set_core_eqns(gal, blueprint)?;
-    set_pts(gal);
+    set_pts(gal, disable_unused_pt);
     Ok(())
 }
 
@@ -204,10 +208,21 @@ fn set_xors(gal: &mut GAL, blueprint: &Blueprint) {
     }
 }
 
-// We don't do anything with the PT bits in the GALxxV8s.
-fn set_pts(gal: &mut GAL) {
-    for bit in gal.pt.iter_mut() {
-        *bit = true;
+// Set the PTD (Product Term Disable) bits for the GALxxV8s.
+fn set_pts(gal: &mut GAL, disable_unused: bool) {
+    if !disable_unused {
+        for bit in gal.pt.iter_mut() {
+            *bit = true;
+        }
+        return;
+    }
+
+    let num_cols = gal.chip.num_cols();
+    for row in 0..gal.pt.len() {
+        let slice = &gal.fuses[row * num_cols..(row + 1) * num_cols];
+        let has_blown = slice.iter().any(|b| *b);
+        let has_intact = slice.iter().any(|b| !*b);
+        gal.pt[row] = has_blown && has_intact;
     }
 }
 

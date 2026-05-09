@@ -162,6 +162,69 @@ fn test_successful_generation() -> Result<()> {
 }
 
 #[test]
+fn test_ptd_warns_on_22v10() -> Result<()> {
+    ensure_dir_exists("test_temp_ptd_warn")?;
+
+    // Reuse an existing 22V10 fixture
+    std::fs::copy(
+        "testcases/success/GAL22V10_combinatorial.pld",
+        "test_temp_ptd_warn/GAL22V10_combinatorial.pld",
+    )?;
+
+    let results = get_test_bin("galette")
+        .current_dir("test_temp_ptd_warn")
+        .args(["--ptd", "GAL22V10_combinatorial.pld"])
+        .output()?;
+
+    assert!(
+        results.stdout.is_empty(),
+        "unexpected stdout: {:?}",
+        std::str::from_utf8(&results.stdout).unwrap()
+    );
+    assert!(results.status.success(), "command failed");
+    let stderr = std::str::from_utf8(&results.stderr).unwrap();
+    assert_eq!(
+        stderr,
+        "GAL22V10_combinatorial.pld: warning: --ptd has no effect on GAL22V10 (PTD fuses only exist on GAL16V8/GAL20V8)\n",
+        "unexpected stderr: {:?}",
+        stderr
+    );
+
+    // Output should still match the existing GAL22V10_combinatorial goldens
+    // since --ptd is a no-op on this chip.
+    let golden = read_to_string("testcases/success/GAL22V10_combinatorial.jed")?;
+    let produced = read_to_string("test_temp_ptd_warn/GAL22V10_combinatorial.jed")?;
+    assert_eq!(
+        produced, golden,
+        ".jed output should be unaffected by --ptd on 22V10"
+    );
+
+    remove_dir_all("test_temp_ptd_warn")?;
+    Ok(())
+}
+
+#[test]
+fn test_ptd() -> Result<()> {
+    ensure_dir_exists("test_temp_ptd")?;
+
+    std::fs::copy(
+        "testcases/ptd/sparse_16v8.pld",
+        "test_temp_ptd/sparse_16v8.pld",
+    )?;
+
+    let results = get_test_bin("galette")
+        .current_dir("test_temp_ptd")
+        .args(["--ptd", "sparse_16v8.pld"])
+        .output()?;
+    check_invocation_succeeded("sparse_16v8.pld", results);
+
+    check_output_matches("testcases/ptd", "test_temp_ptd")?;
+
+    remove_dir_all("test_temp_ptd")?;
+    Ok(())
+}
+
+#[test]
 fn test_security_bit() -> Result<()> {
     ensure_dir_exists("test_temp_security")?;
 

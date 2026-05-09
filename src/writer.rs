@@ -25,6 +25,7 @@ pub struct Config {
     pub gen_chip: bool,
     pub gen_pin: bool,
     pub jedec_sec_bit: bool,
+    pub disable_unused_pt: bool,
 }
 
 ////////////////////////////////////////////////////////////////////////

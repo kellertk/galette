@@ -138,6 +138,10 @@ impl Chip {
         self.get_chip_data().name
     }
 
+    pub fn has_ptd_fuses(&self) -> bool {
+        matches!(self, Chip::GAL16V8 | Chip::GAL20V8)
+    }
+
     pub fn num_pins(&self) -> usize {
         self.get_chip_data().num_pins
     }

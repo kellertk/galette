@@ -1,0 +1,19 @@
+GAL16V8
+SparsePTD
+
+Clock I0    I1    I2    I3    NC    NC    NC    NC   GND
+/OE   NC    NC    O3    O2    O1    O0    NC    NC   VCC
+
+O0 = I0
+
+O1 = I0 * I1 + /I0 * /I1
+
+O2 = I2 + I3
+
+O3 = I0 * I1 * I2 * I3
+
+DESCRIPTION
+
+Sparse GAL16V8 design used to exercise PTD bit emission. O0 uses 1 product
+term, O1 uses 2, O2 uses 2, O3 uses 1. OLMC pins 12, 13, 18, 19 are unused
+(four entire OLMCs with no equation), so with --ptd many PTD bits should be 0.
