@@ -40,10 +40,9 @@ jobs:
         id: meta
         run: |
           set -euo pipefail
-          pkgid=$(cargo pkgid)
-          version="${pkgid##*#}"
-          rest="${pkgid%#*}"
-          crate="${rest##*/}"
+          meta=$(cargo metadata --no-deps --format-version=1)
+          crate=$(printf '%s' "$meta"   | jq -r '.packages[0].name')
+          version=$(printf '%s' "$meta" | jq -r '.packages[0].version')
           echo "crate=$crate"     >> "$GITHUB_OUTPUT"
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "Crate: $crate"
