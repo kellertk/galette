@@ -6,10 +6,10 @@
 //
 
 use crate::{
-    blueprint::{Active, Blueprint, PinMode, OLMC},
+    blueprint::{Active, Blueprint, OLMC, PinMode},
     chips::Chip,
-    errors::{at_line, Error, ErrorCode, OutputSuffix},
-    gal::{self, Bounds, Mode, GAL},
+    errors::{Error, ErrorCode, OutputSuffix, at_line},
+    gal::{self, Bounds, GAL, Mode},
 };
 
 pub fn build(blueprint: &Blueprint, disable_unused_pt: bool) -> Result<GAL, Error> {
@@ -307,7 +307,7 @@ fn check_tristate(chip: Chip, olmc: &OLMC) -> Result<(), ErrorCode> {
 }
 
 fn check_aux(field: &Option<gal::Term>, olmc: &OLMC, suffix: OutputSuffix) -> Result<(), Error> {
-    if let Some(ref term) = field {
+    if let Some(term) = field {
         at_line(
             term.line_num,
             match olmc.output {

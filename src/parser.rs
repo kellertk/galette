@@ -11,7 +11,7 @@ use std::{collections::HashMap, fs, iter::Peekable};
 
 use crate::{
     chips::Chip,
-    errors::{at_line, Error, ErrorCode, LineNum},
+    errors::{Error, ErrorCode, LineNum, at_line},
     gal::Pin,
 };
 
@@ -178,7 +178,7 @@ fn ext_to_suffix(s: &str) -> Result<Suffix, ErrorCode> {
         _ => {
             return Err(ErrorCode::BadSuffix {
                 suffix: s.to_string(),
-            })
+            });
         }
     })
 }
@@ -443,7 +443,7 @@ where
                     ErrorCode::BadToken {
                         expected: "+, #, * or &",
                     },
-                )
+                );
             }
             None => break,
         }

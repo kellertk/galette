@@ -1,0 +1,25 @@
+
+
+                                GAL16V8
+
+                          -------\___/-------
+               ClockInput |  1           20 | VCC
+                          |                 |
+               DataInZero |  2           19 | NC
+                          |                 |
+                DataInOne |  3           18 | NC
+                          |                 |
+                DataInTwo |  4           17 | DataInSix
+                          |                 |
+              DataInThree |  5           16 | DataOutFour
+                          |                 |
+               DataInFour |  6           15 | DataOutThree
+                          |                 |
+               DataInFive |  7           14 | DataOutTwo
+                          |                 |
+                       NC |  8           13 | DataOutOne
+                          |                 |
+                       NC |  9           12 | DataOutZero
+                          |                 |
+                      GND | 10           11 | /OutEnable
+                          -------------------

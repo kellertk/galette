@@ -11,7 +11,7 @@ use crate::{
     chips::Chip,
     errors::{self, Error, ErrorCode},
     gal::{self, Pin, Term},
-    parser::{Content, Equation, Suffix, LHS},
+    parser::{Content, Equation, LHS, Suffix},
 };
 
 // Blueprint stores everything we need to construct the GAL.

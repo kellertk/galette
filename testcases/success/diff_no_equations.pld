@@ -1,0 +1,10 @@
+GAL16V8
+NoEquations
+
+Clock I0    I1    I2    I3    I4    I5    NC    NC   GND
+/OE   O0    O1    O2    O3    O4    I6    NC    NC   VCC
+
+DESCRIPTION
+
+No equations at all: galette accepts a .pld with no equations and
+leaves all outputs undriven. (galasm requires at least one equation.)

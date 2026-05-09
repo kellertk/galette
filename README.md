@@ -4,7 +4,8 @@ Galette is a GALasm-compatible GAL assembler that takes a set of equations, and
 generates a JEDEC file suitable for feeding to a GAL programmer.
 
 This is an updated fork of
-[simon-frankau/galette](https://github.com/simon-frankau/galette).
+[simon-frankau/galette](https://github.com/simon-frankau/galette), published as
+`galette-tk`.
 
 ## Usage
 
@@ -43,26 +44,19 @@ programmer (I have had success with a MiniPro TL866).
 ## More docs
 
 For more docs, refer to [galasm](https://github.com/daveho/GALasm)'s
-documentation. I've decided not to include them in this repo in order to
-simplify the licensing situation.
+documentation. They are not included here due to licensing issues.
 
 ## Background
 
-When I say "A GAL assembler for the 21st Century", my tongue's pretty firmly in
-my cheek. No-one should really want a GAL assembler nowadays. This is dead tech.
-:)
+Hobbists sill use programmable logic devices, but most of the tools are old,
+abandoned, or questionably licensed. This project is a fork of
+[simon-frankau/galette](https://github.com/simon-frankau/galette), which is/was
+an attempt to produce a GALasm-compatible assembler in Rust. This fork is a
+continuation of that project with a some features added.
 
 [GALasm](https://github.com/dwery/galasm) was a turn-of-the-century update of
 GALer, an early '90s open source GAL assembler for the Amiga. It's written in C
 and the style is from another era.
-
-I was trying to program GALs, and having some problems. In the end, it turned
-out to be my power supply, but along the way I discovered a couple of bugs in
-GALasm and generally felt that it could do with an overhaul. I've been trying to
-learn Rust, and so incrementally porting it to a memory-safe language while
-refactoring the structure along the way seemed a fun project.
-
-This is the result. It's a prime example of yak-shaving.
 
 ## Source organisation
 
@@ -80,33 +74,15 @@ Running from the lowest layer of dependency to the highest, we have:
 
 ## Tests
 
-As I've been trying to maintain the behaviour of galasm, I've concentrated on
-end-to-end tests (feed in a file, see what comes out) rather than unit tests,
-which has allowed me to refactor the program without needing to keep any
-specific internal structure, as long as the output's the same.
+The integration tests can be run with the usual `cargo test`. Coverage can be
+measured with `cargo llvm-cov`.
 
-So, if you're wondering why there's no unit tests, that's why.
-
-The integration tests can be run with the usual `cargo test`.
+There are no formal unit tests. Instead, the package is tested end-to-end
+against a set of input files with known-good output.
 
 ## Licensing
 
-I'm releasing my code under the MIT license. While I based galette on galasm,
-this is a reimplementation of the functionality in a different language,
-structured very differently.
+Like the upstream project, this is released under the [MIT license](LICENSE).
 
-I think it's useful to have a clean break here, as the licensing situation of
-galasm is not particularly clear, and it's helpful to have a GAL assembler under
-an explicit open license.
-
-I am, of course, still extremely indebted to Alessandro Zummo and Christian
-Habermann for the starting point of galasm.
-
-## TODOs
-
-Some nice-to-haves I probably won't get around to:
-
-- Add tests for the cases where we're deliberately different from galasm.
-- Specifically, long pin names, no equations, no DESCRIPTION, auxiliary
-  equations before main equations.
-- Add coverage testing.
+The authors are indebted to Alessandro Zummo and Christian Habermann for the
+starting point of galasm, and to Simon Frankau for galette.

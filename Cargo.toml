@@ -1,13 +1,13 @@
 [package]
-name = "galette"
-version = "0.3.0"
-authors = ["Simon Frankau <sgf@arbitrary.name>"]
-edition = "2018"
+name = "galette-tk"
+version = "0.4.0-tk"
+authors = ["Tom Keller <tom@tompkel.net>"]
+edition = "2024"
 license = "MIT"
 description = "A GAL assembler, largely galasm-compatible and written in Rust."
 readme = "README.md"
-homepage = "https://github.com/simon-frankau/galette"
-repository = "https://github.com/simon-frankau/galette"
+homepage = "https://github.com/kellertk/galette"
+repository = "https://github.com/kellertk/galette"
 keywords = ["cli", "gal", "pal", "jed", "jedec"]
 categories = ["command-line-utilities"]
 
@@ -20,6 +20,8 @@ anyhow = "1.0.6"
 
 [lib]
 name = "galette"
+path = "src/lib.rs"
 
 [[bin]]
 name = "galette"
+path = "src/main.rs"

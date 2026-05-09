@@ -16,7 +16,7 @@ use std::{
 use crate::{
     blueprint::OLMC,
     chips::Chip,
-    gal::{Mode, GAL},
+    gal::{GAL, Mode},
 };
 
 #[derive(Debug)]
@@ -344,11 +344,7 @@ fn make_row(buf: &mut String, row: &mut usize, num_of_col: usize, data: &[bool])
 }
 
 fn to_bit(bit: bool) -> char {
-    if bit {
-        '1'
-    } else {
-        '0'
-    }
+    if bit { '1' } else { '0' }
 }
 
 fn make_fuse(pin_names: &[String], gal: &GAL) -> String {

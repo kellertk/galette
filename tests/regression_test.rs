@@ -2,9 +2,8 @@
 // regression_test.rs: Check that tool output is as expected.
 //
 // The standard way of doing Rust integration testing is to use a
-// lib.rs file called by main.rs, but I really want to test all the
-// way up to binary invocation to ensure missed coverage is minimal,
-// so that's what we do here.
+// lib.rs file called by main.rs, but we want to test all the
+// way up to binary invocation to ensure missed coverage is minimal.
 //
 
 use std::collections::{HashMap, HashSet};
@@ -12,7 +11,7 @@ use std::fs::{self, create_dir_all, read_to_string, remove_dir_all};
 use std::path::Path;
 use std::process::Command;
 
-use anyhow::{bail, Result};
+use anyhow::{Result, bail};
 use test_bin::get_test_bin;
 
 fn ensure_dir_exists(name: &str) -> Result<()> {
@@ -102,6 +101,32 @@ fn ensure_contains(
     );
 }
 
+// Strip version-dependent lines from .jed contents before comparison.
+// The header line and trailing checksum both shift on every CARGO_PKG_VERSION
+// bump.
+fn normalize_for_comparison(filename: &str, content: &str) -> String {
+    if !filename.ends_with(".jed") {
+        return content.to_string();
+    }
+    let mut lines: Vec<String> = content.lines().map(String::from).collect();
+    for line in lines.iter_mut() {
+        if line.starts_with("GAL-Assembler:") {
+            *line = "GAL-Assembler:  <normalised>".to_string();
+        }
+    }
+    // The JEDEC transmission checksum is the file's final non-empty
+    // line: a leading ETX (0x03) byte followed by four lowercase hex
+    // digits.
+    if let Some(last) = lines.iter_mut().rfind(|l| !l.is_empty())
+        && last.len() == 5
+        && last.starts_with('\x03')
+        && last[1..].chars().all(|c| c.is_ascii_hexdigit())
+    {
+        *last = "<normalised-checksum>".to_string();
+    }
+    lines.join("\n")
+}
+
 fn check_output_matches(before_dir: &str, after_dir: &str) -> Result<()> {
     // Get lists of files.
     let befores = fs::read_dir(before_dir)?
@@ -121,7 +146,9 @@ fn check_output_matches(before_dir: &str, after_dir: &str) -> Result<()> {
         let after_name = format!("{}/{}", after_dir, file);
         let before_data = read_to_string(&before_name)?;
         let after_data = read_to_string(&after_name)?;
-        if before_data != after_data {
+        if normalize_for_comparison(file, &before_data)
+            != normalize_for_comparison(file, &after_data)
+        {
             // Try to run diff on platforms that support it.
             let _ = Command::new("diff")
                 .args(["-u", "--", &before_name, &after_name])
@@ -195,7 +222,8 @@ fn test_ptd_warns_on_22v10() -> Result<()> {
     let golden = read_to_string("testcases/success/GAL22V10_combinatorial.jed")?;
     let produced = read_to_string("test_temp_ptd_warn/GAL22V10_combinatorial.jed")?;
     assert_eq!(
-        produced, golden,
+        normalize_for_comparison("GAL22V10_combinatorial.jed", &produced),
+        normalize_for_comparison("GAL22V10_combinatorial.jed", &golden),
         ".jed output should be unaffected by --ptd on 22V10"
     );
 
@@ -246,89 +274,320 @@ fn test_security_bit() -> Result<()> {
 }
 
 const FAILURE_MESSAGES: [(&str, &str); 83] = [
-    ("GAL16V8_badname.pld", "Error in line 1: unexpected GAL type found: 'GAL16V8x'\n"),
-    ("GAL16V8_complex_12.pld", "Error in line 9: pin 12 can't be used as input in complex mode\n"),
-    ("GAL16V8_complex_19.pld", "Error in line 9: pin 19 can't be used as input in complex mode\n"),
-    ("GAL16V8_reg_1.pld", "Error in line 7: pin 1 is reserved for 'Clock' in registered mode\n"),
-    ("GAL16V8_reg_11.pld", "Error in line 7: pin 11 is reserved for '/OE' in registered mode\n"),
-    ("GAL16V8_toomanyreg.pld", "Error in line 7: too many product terms in sum for pin (max: 8, saw: 9)\n"),
-    ("GAL20RA10_badname.pld", "Error in line 1: unexpected GAL type found: 'GAL20RA10x'\n"),
-    ("GAL20RA10_pin1.pld", "Error in line 7: pin 1 is reserved for '/PL' on GAL20RA10 devices and can't be used in equations\n"),
-    ("GAL20RA10_pin13.pld", "Error in line 7: pin 13 is reserved for '/OE' on GAL20RA10 devices and can't be used in equations\n"),
-    ("GAL20V8_badname.pld", "Error in line 1: unexpected GAL type found: 'GAL20V8x'\n"),
-    ("GAL20V8_complex_15.pld", "Error in line 9: pin 15 can't be used as input in complex mode\n"),
-    ("GAL20V8_complex_22.pld", "Error in line 9: pin 22 can't be used as input in complex mode\n"),
-    ("GAL20V8_complex_in.pld", "Error in line 5: pinname I8 is defined twice\n"),
-    ("GAL20V8_reg_1.pld", "Error in line 7: pin 1 is reserved for 'Clock' in registered mode\n"),
-    ("GAL20V8_reg_13.pld", "Error in line 7: pin 13 is reserved for '/OE' in registered mode\n"),
-    ("GAL22V10_badname.pld", "Error in line 1: unexpected GAL type found: 'GAL22V10x'\n"),
-    ("arbad.pld", "Error in line 5: GAL22V10: AR is not allowed as pinname\n"),
-    ("badarext.pld", "Error in line 23: no suffix is allowed for AR\n"),
-    ("badarusage.pld", "Error in line 21: use of AR is not allowed in equations\n"),
-    ("badclk.pld", "Error in line 7: .CLK is not allowed when this type of GAL is used\n"),
-    ("badgnd.pld", "Error in line 4: pin 8 cannot be named GND, because the name is reserved for pin 10\n"),
-    ("badname.pld", "Error in line 1: unexpected GAL type found: 'GAL42V13'\n"),
-    ("badpinstart.pld", "Error in line 4: expected pin, found other token\n"),
-    ("badprst.pld", "Error in line 7: .APRST is not allowed when this type of GAL is used\n"),
-    ("badrst.pld", "Error in line 7: .ARST is not allowed when this type of GAL is used\n"),
-    ("badspext.pld", "Error in line 23: no suffix is allowed for SP\n"),
-    ("badspusage.pld", "Error in line 21: use of SP is not allowed in equations\n"),
-    ("badvcc.pld", "Error in line 4: pin 8 cannot be named VCC, because the name is reserved for pin 20\n"),
-    ("continuation_bad.pld", "Error in line 12: expected pin, found other token\n"),
-    ("inputonly.pld", "Error in line 7: this pin can't be used as output\n"),
-    ("logicgnd.pld", "Error in line 7: use of VCC and GND is not allowed in equations\n"),
-    ("logicvcc.pld", "Error in line 7: use of VCC and GND is not allowed in equations\n"),
-    ("longext.pld", "Error in line 7: unknown suffix found: 'TOOLONGEXTENSION'\n"),
-    ("multiar.pld", "Error in line 23: only one product term allowed (no OR)\n"),
-    ("multiclk.pld", "Error in line 22: only one product term allowed (no OR)\n"),
-    ("multiena.pld", "Error in line 15: only one product term allowed (no OR)\n"),
-    ("multiprst.pld", "Error in line 22: only one product term allowed (no OR)\n"),
-    ("multirst.pld", "Error in line 22: only one product term allowed (no OR)\n"),
-    ("multisp.pld", "Error in line 23: only one product term allowed (no OR)\n"),
-    ("nclhs.pld", "Error in line 17: NC (Not Connected) is not allowed in logic equations\n"),
-    ("ncpin.pld", "Error in line 9: NC (Not Connected) is not allowed in logic equations\n"),
-    ("negaprst.pld", "Error in line 25: negation of .APRST is not allowed\n"),
-    ("negar.pld", "Error in line 23: negation of AR is not allowed\n"),
-    ("negarst.pld", "Error in line 24: negation of .ARST is not allowed\n"),
-    ("negclk.pld", "Error in line 8: negation of .CLK is not allowed\n"),
-    ("negena.pld", "Error in line 17: negation of .E is not allowed\n"),
-    ("neggnd.pld", "Error in line 7: GND cannot be negated, use VCC instead of /GND\n"),
-    ("negsp.pld", "Error in line 25: negation of SP is not allowed\n"),
-    ("negvcc.pld", "Error in line 7: VCC cannot be negated, use GND instead of /VCC\n"),
-    ("noclk.pld", "Error in line 7: missing clock definition (.CLK) of registered output\n"),
-    ("noequals.pld", "Error in line 7: unexpected character in input: '?'\n"),
+    (
+        "GAL16V8_badname.pld",
+        "Error in line 1: unexpected GAL type found: 'GAL16V8x'\n",
+    ),
+    (
+        "GAL16V8_complex_12.pld",
+        "Error in line 9: pin 12 can't be used as input in complex mode\n",
+    ),
+    (
+        "GAL16V8_complex_19.pld",
+        "Error in line 9: pin 19 can't be used as input in complex mode\n",
+    ),
+    (
+        "GAL16V8_reg_1.pld",
+        "Error in line 7: pin 1 is reserved for 'Clock' in registered mode\n",
+    ),
+    (
+        "GAL16V8_reg_11.pld",
+        "Error in line 7: pin 11 is reserved for '/OE' in registered mode\n",
+    ),
+    (
+        "GAL16V8_toomanyreg.pld",
+        "Error in line 7: too many product terms in sum for pin (max: 8, saw: 9)\n",
+    ),
+    (
+        "GAL20RA10_badname.pld",
+        "Error in line 1: unexpected GAL type found: 'GAL20RA10x'\n",
+    ),
+    (
+        "GAL20RA10_pin1.pld",
+        "Error in line 7: pin 1 is reserved for '/PL' on GAL20RA10 devices and can't be used in equations\n",
+    ),
+    (
+        "GAL20RA10_pin13.pld",
+        "Error in line 7: pin 13 is reserved for '/OE' on GAL20RA10 devices and can't be used in equations\n",
+    ),
+    (
+        "GAL20V8_badname.pld",
+        "Error in line 1: unexpected GAL type found: 'GAL20V8x'\n",
+    ),
+    (
+        "GAL20V8_complex_15.pld",
+        "Error in line 9: pin 15 can't be used as input in complex mode\n",
+    ),
+    (
+        "GAL20V8_complex_22.pld",
+        "Error in line 9: pin 22 can't be used as input in complex mode\n",
+    ),
+    (
+        "GAL20V8_complex_in.pld",
+        "Error in line 5: pinname I8 is defined twice\n",
+    ),
+    (
+        "GAL20V8_reg_1.pld",
+        "Error in line 7: pin 1 is reserved for 'Clock' in registered mode\n",
+    ),
+    (
+        "GAL20V8_reg_13.pld",
+        "Error in line 7: pin 13 is reserved for '/OE' in registered mode\n",
+    ),
+    (
+        "GAL22V10_badname.pld",
+        "Error in line 1: unexpected GAL type found: 'GAL22V10x'\n",
+    ),
+    (
+        "arbad.pld",
+        "Error in line 5: GAL22V10: AR is not allowed as pinname\n",
+    ),
+    (
+        "badarext.pld",
+        "Error in line 23: no suffix is allowed for AR\n",
+    ),
+    (
+        "badarusage.pld",
+        "Error in line 21: use of AR is not allowed in equations\n",
+    ),
+    (
+        "badclk.pld",
+        "Error in line 7: .CLK is not allowed when this type of GAL is used\n",
+    ),
+    (
+        "badgnd.pld",
+        "Error in line 4: pin 8 cannot be named GND, because the name is reserved for pin 10\n",
+    ),
+    (
+        "badname.pld",
+        "Error in line 1: unexpected GAL type found: 'GAL42V13'\n",
+    ),
+    (
+        "badpinstart.pld",
+        "Error in line 4: expected pin, found other token\n",
+    ),
+    (
+        "badprst.pld",
+        "Error in line 7: .APRST is not allowed when this type of GAL is used\n",
+    ),
+    (
+        "badrst.pld",
+        "Error in line 7: .ARST is not allowed when this type of GAL is used\n",
+    ),
+    (
+        "badspext.pld",
+        "Error in line 23: no suffix is allowed for SP\n",
+    ),
+    (
+        "badspusage.pld",
+        "Error in line 21: use of SP is not allowed in equations\n",
+    ),
+    (
+        "badvcc.pld",
+        "Error in line 4: pin 8 cannot be named VCC, because the name is reserved for pin 20\n",
+    ),
+    (
+        "continuation_bad.pld",
+        "Error in line 12: expected pin, found other token\n",
+    ),
+    (
+        "inputonly.pld",
+        "Error in line 7: this pin can't be used as output\n",
+    ),
+    (
+        "logicgnd.pld",
+        "Error in line 7: use of VCC and GND is not allowed in equations\n",
+    ),
+    (
+        "logicvcc.pld",
+        "Error in line 7: use of VCC and GND is not allowed in equations\n",
+    ),
+    (
+        "longext.pld",
+        "Error in line 7: unknown suffix found: 'TOOLONGEXTENSION'\n",
+    ),
+    (
+        "multiar.pld",
+        "Error in line 23: only one product term allowed (no OR)\n",
+    ),
+    (
+        "multiclk.pld",
+        "Error in line 22: only one product term allowed (no OR)\n",
+    ),
+    (
+        "multiena.pld",
+        "Error in line 15: only one product term allowed (no OR)\n",
+    ),
+    (
+        "multiprst.pld",
+        "Error in line 22: only one product term allowed (no OR)\n",
+    ),
+    (
+        "multirst.pld",
+        "Error in line 22: only one product term allowed (no OR)\n",
+    ),
+    (
+        "multisp.pld",
+        "Error in line 23: only one product term allowed (no OR)\n",
+    ),
+    (
+        "nclhs.pld",
+        "Error in line 17: NC (Not Connected) is not allowed in logic equations\n",
+    ),
+    (
+        "ncpin.pld",
+        "Error in line 9: NC (Not Connected) is not allowed in logic equations\n",
+    ),
+    (
+        "negaprst.pld",
+        "Error in line 25: negation of .APRST is not allowed\n",
+    ),
+    (
+        "negar.pld",
+        "Error in line 23: negation of AR is not allowed\n",
+    ),
+    (
+        "negarst.pld",
+        "Error in line 24: negation of .ARST is not allowed\n",
+    ),
+    (
+        "negclk.pld",
+        "Error in line 8: negation of .CLK is not allowed\n",
+    ),
+    (
+        "negena.pld",
+        "Error in line 17: negation of .E is not allowed\n",
+    ),
+    (
+        "neggnd.pld",
+        "Error in line 7: GND cannot be negated, use VCC instead of /GND\n",
+    ),
+    (
+        "negsp.pld",
+        "Error in line 25: negation of SP is not allowed\n",
+    ),
+    (
+        "negvcc.pld",
+        "Error in line 7: VCC cannot be negated, use GND instead of /VCC\n",
+    ),
+    (
+        "noclk.pld",
+        "Error in line 7: missing clock definition (.CLK) of registered output\n",
+    ),
+    (
+        "noequals.pld",
+        "Error in line 7: unexpected character in input: '?'\n",
+    ),
     ("nognd.pld", "Error in line 4: pin 10 must be named GND\n"),
-    ("norhs.pld", "Error in line 7: expected right-hand side of equation, found end of file\n"),
-    ("norhs2.pld", "Error in line 7: expected right-hand side of equation, found end of file\n"),
-    ("norhs3.pld", "Error in line 7: expected pin name, found end of line\n"),
+    (
+        "norhs.pld",
+        "Error in line 7: expected right-hand side of equation, found end of file\n",
+    ),
+    (
+        "norhs2.pld",
+        "Error in line 7: expected right-hand side of equation, found end of file\n",
+    ),
+    (
+        "norhs3.pld",
+        "Error in line 7: expected pin name, found end of line\n",
+    ),
     ("novcc.pld", "Error in line 5: pin 20 must be named VCC\n"),
-    ("oneline.pld", "Error in line 1: expected signature, found end of file\n"),
-    ("onlyclk.pld", "Error in line 10: the output must be defined to use .CLK\n"),
-    ("onlyenable.pld", "Error in line 10: the output must be defined to use .E\n"),
-    ("onlyprst.pld", "Error in line 10: the output must be defined to use .APRST\n"),
-    ("onlyrst.pld", "Error in line 10: the output must be defined to use .ARST\n"),
-    ("pinbadneg.pld", "Error in line 4: pin name expected after '/', found non-alphabetic character ' '\n"),
-    ("pinrepeated.pld", "Error in line 4: pinname I5 is defined twice\n"),
-    ("plaintri.pld", "Error in line 8: tristate control without previous '.T'\n"),
-    ("regtri.pld", "Error in line 8: GAL16V8/20V8: tri. control for reg. output is not allowed\n"),
+    (
+        "oneline.pld",
+        "Error in line 1: expected signature, found end of file\n",
+    ),
+    (
+        "onlyclk.pld",
+        "Error in line 10: the output must be defined to use .CLK\n",
+    ),
+    (
+        "onlyenable.pld",
+        "Error in line 10: the output must be defined to use .E\n",
+    ),
+    (
+        "onlyprst.pld",
+        "Error in line 10: the output must be defined to use .APRST\n",
+    ),
+    (
+        "onlyrst.pld",
+        "Error in line 10: the output must be defined to use .ARST\n",
+    ),
+    (
+        "pinbadneg.pld",
+        "Error in line 4: pin name expected after '/', found non-alphabetic character ' '\n",
+    ),
+    (
+        "pinrepeated.pld",
+        "Error in line 4: pinname I5 is defined twice\n",
+    ),
+    (
+        "plaintri.pld",
+        "Error in line 8: tristate control without previous '.T'\n",
+    ),
+    (
+        "regtri.pld",
+        "Error in line 8: GAL16V8/20V8: tri. control for reg. output is not allowed\n",
+    ),
     ("repar.pld", "Error in line 25: AR is defined twice\n"),
-    ("reparst.pld", "Error in line 26: multiple .APRST definitions for the same output\n"),
-    ("repclk.pld", "Error in line 9: multiple .CLK definitions for the same output\n"),
-    ("repena.pld", "Error in line 19: multiple .E definitions for the same output\n"),
-    ("reppin.pld", "Error in line 17: output O4 is defined multiple times\n"),
-    ("reprst.pld", "Error in line 26: multiple .ARST definitions for the same output\n"),
+    (
+        "reparst.pld",
+        "Error in line 26: multiple .APRST definitions for the same output\n",
+    ),
+    (
+        "repclk.pld",
+        "Error in line 9: multiple .CLK definitions for the same output\n",
+    ),
+    (
+        "repena.pld",
+        "Error in line 19: multiple .E definitions for the same output\n",
+    ),
+    (
+        "reppin.pld",
+        "Error in line 17: output O4 is defined multiple times\n",
+    ),
+    (
+        "reprst.pld",
+        "Error in line 26: multiple .ARST definitions for the same output\n",
+    ),
     ("repsp.pld", "Error in line 25: SP is defined twice\n"),
-    ("spbad.pld", "Error in line 5: GAL22V10: SP is not allowed as pinname\n"),
-    ("threeline.pld", "Error in line 2: expected pin definitions, found end of file\n"),
-    ("toofewpins.pld", "Error in line 5: wrong number of pins on pin definition line - expected 10, found 9\n"),
-    ("toomanyterms_io.pld", "Error in line 7: too many product terms in sum for pin (max: 7, saw: 8)\n"),
-    ("twoline.pld", "Error in line 2: expected pin definitions, found end of file\n"),
-    ("unkext.pld", "Error in line 7: unknown suffix found: 'UNK'\n"),
+    (
+        "spbad.pld",
+        "Error in line 5: GAL22V10: SP is not allowed as pinname\n",
+    ),
+    (
+        "threeline.pld",
+        "Error in line 2: expected pin definitions, found end of file\n",
+    ),
+    (
+        "toofewpins.pld",
+        "Error in line 5: wrong number of pins on pin definition line - expected 10, found 9\n",
+    ),
+    (
+        "toomanyterms_io.pld",
+        "Error in line 7: too many product terms in sum for pin (max: 7, saw: 8)\n",
+    ),
+    (
+        "twoline.pld",
+        "Error in line 2: expected pin definitions, found end of file\n",
+    ),
+    (
+        "unkext.pld",
+        "Error in line 7: unknown suffix found: 'UNK'\n",
+    ),
     ("unklhs.pld", "Error in line 17: unknown pinname 'DUNNO'\n"),
     ("unkpin.pld", "Error in line 9: unknown pinname 'Unknown'\n"),
-    ("unregclk.pld", "Error in line 11: use of .CLK is only allowed for registered outputs\n"),
-    ("unregprst.pld", "Error in line 11: use of .APRST is only allowed for registered outputs\n"),
-    ("unregrst.pld", "Error in line 11: use of .ARST is only allowed for registered outputs\n"),
+    (
+        "unregclk.pld",
+        "Error in line 11: use of .CLK is only allowed for registered outputs\n",
+    ),
+    (
+        "unregprst.pld",
+        "Error in line 11: use of .APRST is only allowed for registered outputs\n",
+    ),
+    (
+        "unregrst.pld",
+        "Error in line 11: use of .ARST is only allowed for registered outputs\n",
+    ),
 ];
 
 #[test]

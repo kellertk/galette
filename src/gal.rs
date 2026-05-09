@@ -8,7 +8,7 @@
 
 use crate::{
     chips::Chip,
-    errors::{at_line, Error, ErrorCode, LineNum},
+    errors::{Error, ErrorCode, LineNum, at_line},
 };
 
 pub use crate::chips::Bounds;
