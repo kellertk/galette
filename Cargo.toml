@@ -10,6 +10,7 @@ homepage = "https://github.com/kellertk/galette"
 repository = "https://github.com/kellertk/galette"
 keywords = ["cli", "gal", "pal", "jed", "jedec"]
 categories = ["command-line-utilities"]
+exclude = [".github"]
 
 [dependencies]
 clap = "4.5.20"
