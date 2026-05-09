@@ -98,7 +98,7 @@ checksum = "c67353c641dc847124ea1902d69bd753dee9bb3beff9aa3662ecf86c971d1fac"
 
 [[package]]
 name = "galette-tk"
-version = "0.4.0-tk"
+version = "0.5.0"
 dependencies = [
  "anyhow",
  "clap",
