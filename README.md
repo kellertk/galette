@@ -3,7 +3,8 @@
 Galette is a GALasm-compatible GAL assembler that takes a set of equations, and
 generates a JEDEC file suitable for feeding to a GAL programmer.
 
-This is an updated fork of simon-frankau/galette.
+This is an updated fork of
+[simon-frankau/galette](https://github.com/simon-frankau/galette).
 
 ## Usage
 
