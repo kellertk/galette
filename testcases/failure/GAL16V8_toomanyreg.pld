@@ -1,0 +1,12 @@
+GAL16V8
+RegTest
+
+Clock  I0    I1    I2    I3    I4    I5    I6    I7    GND
+/OE    O0    O1    O2    O3    O4    I8    I9    I10   VCC
+
+O0.R = I0 + I1 + I2 + I3 + I4 + I5 + I6 + I7 + I8
+
+DESCRIPTION
+
+Registered outputs in registered mode get 8 sum terms. Nine should fail
+with max: 8 (not 7, which is the combinatorial-output limit).

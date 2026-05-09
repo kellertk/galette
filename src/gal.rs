@@ -215,8 +215,9 @@ impl GAL {
 
     // Enter a term into the given set of rows of the main logic array.
     pub fn add_term(&mut self, term: &Term, bounds: &Bounds) -> Result<(), Error> {
+        let max_terms = bounds.max_row - bounds.row_offset;
         let mut bounds = *bounds;
-        let single_row = bounds.max_row == bounds.row_offset + 1;
+        let single_row = max_terms == 1;
         for row in term.pins.iter() {
             if bounds.row_offset == bounds.max_row {
                 // too many ORs?
@@ -226,7 +227,7 @@ impl GAL {
                         ErrorCode::MoreThanOneProduct
                     } else {
                         ErrorCode::TooManyProducts {
-                            max: bounds.max_row - 1,
+                            max: max_terms,
                             seen: term.pins.len(),
                         }
                     }),

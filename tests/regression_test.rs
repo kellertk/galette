@@ -182,12 +182,13 @@ fn test_security_bit() -> Result<()> {
     Ok(())
 }
 
-const FAILURE_MESSAGES: [(&str, &str); 82] = [
+const FAILURE_MESSAGES: [(&str, &str); 83] = [
     ("GAL16V8_badname.pld", "Error in line 1: unexpected GAL type found: 'GAL16V8x'\n"),
     ("GAL16V8_complex_12.pld", "Error in line 9: pin 12 can't be used as input in complex mode\n"),
     ("GAL16V8_complex_19.pld", "Error in line 9: pin 19 can't be used as input in complex mode\n"),
     ("GAL16V8_reg_1.pld", "Error in line 7: pin 1 is reserved for 'Clock' in registered mode\n"),
     ("GAL16V8_reg_11.pld", "Error in line 7: pin 11 is reserved for '/OE' in registered mode\n"),
+    ("GAL16V8_toomanyreg.pld", "Error in line 7: too many product terms in sum for pin (max: 8, saw: 9)\n"),
     ("GAL20RA10_badname.pld", "Error in line 1: unexpected GAL type found: 'GAL20RA10x'\n"),
     ("GAL20RA10_pin1.pld", "Error in line 7: pin 1 is reserved for '/PL' on GAL20RA10 devices and can't be used in equations\n"),
     ("GAL20RA10_pin13.pld", "Error in line 7: pin 13 is reserved for '/OE' on GAL20RA10 devices and can't be used in equations\n"),
