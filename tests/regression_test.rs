@@ -71,7 +71,7 @@ fn check_invocation_failed(name: &str, messages: &HashMap<&str, &str>, res: std:
             name,
             *messages
                 .get(name)
-                .expect(&format!("No known error message for '{}'", name))
+                .unwrap_or_else(|| panic!("No known error message for '{}'", name))
         ),
         "'{:?}' produced unexpected output to stderr",
         name
@@ -90,7 +90,7 @@ fn ensure_contains(
     }
 
     let mut missing_names = contained_names
-        .difference(&containing_names)
+        .difference(containing_names)
         .collect::<Vec<_>>();
     missing_names.sort();
 

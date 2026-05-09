@@ -228,7 +228,7 @@ impl OLMC {
             });
         }
 
-        if self.tri_con != None {
+        if self.tri_con.is_some() {
             return Err(ErrorCode::RepeatedControl {
                 suffix: OutputSuffix::E,
             });

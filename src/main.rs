@@ -9,7 +9,7 @@
 extern crate clap;
 extern crate galette;
 
-use clap::{Command, Arg, ArgAction};
+use clap::{Arg, ArgAction, Command};
 
 use std::process;
 
@@ -20,38 +20,34 @@ fn main() {
         .version(env!("CARGO_PKG_VERSION"))
         .author("Simon Frankau <sgf@arbitrary.name>")
         .about("GALasm-compatible GAL assembler")
-        .arg(
-            Arg::new("INPUT.pld")
-                .help("Input file")
-                .required(true)
-        )
+        .arg(Arg::new("INPUT.pld").help("Input file").required(true))
         .arg(
             Arg::new("secure")
                 .short('s')
                 .long("secure")
                 .help("Enable security fuse")
-                .action(ArgAction::SetTrue)
+                .action(ArgAction::SetTrue),
         )
         .arg(
             Arg::new("nochip")
                 .short('c')
                 .long("nochip")
                 .help("Disable .chp file output")
-                .action(ArgAction::SetTrue)
+                .action(ArgAction::SetTrue),
         )
         .arg(
             Arg::new("nofuse")
                 .short('f')
                 .long("nofuse")
                 .help("Disable .fus file output")
-                .action(ArgAction::SetTrue)
+                .action(ArgAction::SetTrue),
         )
         .arg(
             Arg::new("nopin")
                 .short('p')
                 .long("nopin")
                 .help("Disable .pin file output")
-                .action(ArgAction::SetTrue)
+                .action(ArgAction::SetTrue),
         )
         .get_matches();
 

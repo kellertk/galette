@@ -302,9 +302,7 @@ where
     let len = tokens.len();
     for token in tokens.into_iter() {
         match token {
-            (_, Token::Item((name, suffix))) if suffix == Suffix::None => {
-                pins.push((name.name, name.neg))
-            }
+            (_, Token::Item((name, Suffix::None))) => pins.push((name.name, name.neg)),
             (line_num, Token::Item(_)) => return err(line_num, ErrorCode::BadPinSuffix),
             (line_num, _) => return err(line_num, ErrorCode::BadToken { expected: "pin" }),
         }
