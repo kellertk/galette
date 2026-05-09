@@ -1,3 +1,7 @@
 /target
 **/*.rs.bk
 **/*~
+.claude
+AGENTS.md
+CLAUDE.md
+.github/copilot-instructions.md
