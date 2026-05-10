@@ -368,7 +368,10 @@ where
         if suffix != Suffix::None {
             err(line_num, ErrorCode::BadPinSuffix)
         } else {
-            Ok((line_num, at_line(line_num, lookup_pin(chip, pin_map, &named_pin))?))
+            Ok((
+                line_num,
+                at_line(line_num, lookup_pin(chip, pin_map, &named_pin))?,
+            ))
         }
     } else {
         err(line_num, ErrorCode::BadToken { expected: "pin" })

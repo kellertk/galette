@@ -68,8 +68,7 @@ pub fn optimize_interactive(file_name: &str) -> anyhow::Result<OptimizeOutcome> 
     let pins = content.pins;
     let eqns = content.eqns;
 
-    let raw = fs::read_to_string(file_name)
-        .with_context(|| format!("reading {}", file_name))?;
+    let raw = fs::read_to_string(file_name).with_context(|| format!("reading {}", file_name))?;
     let mut lines: Vec<String> = raw.split('\n').map(|s| s.to_string()).collect();
 
     let stdin = io::stdin();
@@ -82,21 +81,18 @@ pub fn optimize_interactive(file_name: &str) -> anyhow::Result<OptimizeOutcome> 
     let mut had_candidates = false;
     let mut accept_all = false;
     if !is_tty {
-        eprintln!(
-            "warning: stdin is not a terminal; auto-accepting all optimizer suggestions"
-        );
+        eprintln!("warning: stdin is not a terminal; auto-accepting all optimizer suggestions");
         accept_all = true;
     }
 
     for eqn in &eqns {
-        let term =
-            blueprint::eqn_to_term(chip, eqn).map_err(|code| errors::FileError {
-                file: file_name.into(),
-                err: errors::Error {
-                    code,
-                    line: eqn.line_num,
-                },
-            })?;
+        let term = blueprint::eqn_to_term(chip, eqn).map_err(|code| errors::FileError {
+            file: file_name.into(),
+            err: errors::Error {
+                code,
+                line: eqn.line_num,
+            },
+        })?;
 
         let allow_flip = matches!(eqn.lhs, parser::LHS::Pin(_));
         let Some(opt) = optimize::optimize_term(&term, allow_flip) else {
@@ -109,13 +105,8 @@ pub fn optimize_interactive(file_name: &str) -> anyhow::Result<OptimizeOutcome> 
         } else {
             eqn.lhs.clone()
         };
-        let new_eqn = optimize::term_to_equation(
-            &opt.term,
-            new_lhs,
-            chip,
-            eqn.line_num,
-            eqn.end_line,
-        );
+        let new_eqn =
+            optimize::term_to_equation(&opt.term, new_lhs, chip, eqn.line_num, eqn.end_line);
 
         let orig_text = optimize::format_equation(eqn, &pins);
         let new_text = optimize::format_equation(&new_eqn, &pins);
@@ -155,11 +146,7 @@ pub fn optimize_interactive(file_name: &str) -> anyhow::Result<OptimizeOutcome> 
             writeln!(stdout_lock, "(EOF) cancelled")?;
             return Ok(OptimizeOutcome::Cancelled);
         }
-        let choice = input
-            .trim()
-            .chars()
-            .next()
-            .map(|c| c.to_ascii_lowercase());
+        let choice = input.trim().chars().next().map(|c| c.to_ascii_lowercase());
         match choice {
             Some('c') => {
                 writeln!(stdout_lock, "Cancelled.")?;
@@ -195,12 +182,7 @@ pub fn optimize_interactive(file_name: &str) -> anyhow::Result<OptimizeOutcome> 
         stdout_lock.flush()?;
         let mut input = String::new();
         stdin_lock.read_line(&mut input)?;
-        input
-            .trim()
-            .chars()
-            .next()
-            .map(|c| c.to_ascii_lowercase())
-            == Some('y')
+        input.trim().chars().next().map(|c| c.to_ascii_lowercase()) == Some('y')
     } else {
         true
     };
@@ -210,8 +192,7 @@ pub fn optimize_interactive(file_name: &str) -> anyhow::Result<OptimizeOutcome> 
     }
 
     let bak_path = format!("{file_name}.bak");
-    fs::copy(file_name, &bak_path)
-        .with_context(|| format!("writing backup {bak_path}"))?;
+    fs::copy(file_name, &bak_path).with_context(|| format!("writing backup {bak_path}"))?;
 
     // Reverse splice order keeps earlier indices valid.
     accepted.sort_by_key(|entry| std::cmp::Reverse(entry.0));
@@ -223,8 +204,7 @@ pub fn optimize_interactive(file_name: &str) -> anyhow::Result<OptimizeOutcome> 
 
     let joined = lines.join("\n");
     let tmp_path = format!("{file_name}.tmp");
-    fs::write(&tmp_path, &joined)
-        .with_context(|| format!("writing {tmp_path}"))?;
+    fs::write(&tmp_path, &joined).with_context(|| format!("writing {tmp_path}"))?;
     fs::rename(&tmp_path, file_name)
         .with_context(|| format!("renaming {tmp_path} -> {file_name}"))?;
 

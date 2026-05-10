@@ -319,8 +319,10 @@ fn bool_to_term(b: &Bool, vars: &[usize], line_num: LineNum) -> Term {
             }
         }
         Bool::Or(items) => {
-            let products: Vec<Vec<Pin>> =
-                items.iter().map(|item| bool_to_product(item, vars)).collect();
+            let products: Vec<Vec<Pin>> = items
+                .iter()
+                .map(|item| bool_to_product(item, vars))
+                .collect();
             Term {
                 line_num,
                 pins: products,
