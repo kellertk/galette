@@ -1,0 +1,10 @@
+version: 2
+updates:
+  - package-ecosystem: "cargo"
+    directory: "/" # Change to sub-directory if your Cargo.toml isn't at the root
+    schedule:
+      interval: "weekly"
+    groups:
+      dependency-updates:
+        patterns:
+          - "*"
