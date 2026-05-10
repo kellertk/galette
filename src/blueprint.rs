@@ -134,9 +134,8 @@ impl Blueprint {
     }
 }
 
-// Convert an Equation, which is close to the input syntax, into a
-// Term, which is close to the fuse map representation.
-fn eqn_to_term(chip: Chip, eqn: &Equation) -> Result<Term, ErrorCode> {
+// Convert an Equation to a Term
+pub(crate) fn eqn_to_term(chip: Chip, eqn: &Equation) -> Result<Term, ErrorCode> {
     // Special case for constant true or false.
     if eqn.rhs.len() == 1 {
         let pin = &eqn.rhs[0];

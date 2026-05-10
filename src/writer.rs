@@ -302,15 +302,22 @@ fn pin_type(gal: &GAL, olmcs: &[OLMC], i: usize) -> &'static str {
 }
 
 fn make_pin(gal: &GAL, pin_names: &[String], olmcs: &[OLMC]) -> String {
+    // Floor of 8 keeps short-name output byte-identical to pre-fix.
+    let name_w = pin_names.iter().map(String::len).max().unwrap_or(0).max(8);
+    let sep_w = 9 + name_w + 11 + 1;
+
     let mut buf = String::new();
     buf.push_str("\n\n");
-    buf.push_str(" Pin # | Name     | Pin Type\n");
-    buf.push_str("-----------------------------\n");
+    let _ = writeln!(buf, " Pin # | {:<name_w$} | Pin Type", "Name");
+    for _ in 0..sep_w {
+        buf.push('-');
+    }
+    buf.push('\n');
 
     for (name, i) in pin_names.iter().zip(1..) {
         let _ = writeln!(
             buf,
-            "  {:>2}   | {:<8} | {}",
+            "  {:>2}   | {:<name_w$} | {}",
             i,
             name,
             pin_type(gal, olmcs, i)

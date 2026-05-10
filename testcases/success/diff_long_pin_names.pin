@@ -1,25 +1,25 @@
 
 
- Pin # | Name     | Pin Type
------------------------------
-   1   | ClockInput | Input
-   2   | DataInZero | Input
-   3   | DataInOne | Input
-   4   | DataInTwo | Input
-   5   | DataInThree | Input
-   6   | DataInFour | Input
-   7   | DataInFive | Input
-   8   | NC       | Input
-   9   | NC       | Input
-  10   | GND      | GND
-  11   | /OutEnable | Input
-  12   | DataOutZero | Output
-  13   | DataOutOne | Output
-  14   | DataOutTwo | Output
+ Pin # | Name         | Pin Type
+---------------------------------
+   1   | ClockInput   | Input
+   2   | DataInZero   | Input
+   3   | DataInOne    | Input
+   4   | DataInTwo    | Input
+   5   | DataInThree  | Input
+   6   | DataInFour   | Input
+   7   | DataInFive   | Input
+   8   | NC           | Input
+   9   | NC           | Input
+  10   | GND          | GND
+  11   | /OutEnable   | Input
+  12   | DataOutZero  | Output
+  13   | DataOutOne   | Output
+  14   | DataOutTwo   | Output
   15   | DataOutThree | Output
-  16   | DataOutFour | Output
-  17   | DataInSix | Input
-  18   | NC       | NC
-  19   | NC       | NC
-  20   | VCC      | VCC
+  16   | DataOutFour  | Output
+  17   | DataInSix    | Input
+  18   | NC           | NC
+  19   | NC           | NC
+  20   | VCC          | VCC
 

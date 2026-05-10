@@ -6,7 +6,7 @@
 // compatible with galette's.
 //
 
-use std::process;
+use std::{fs, path::PathBuf, process};
 
 use clap::Parser;
 
@@ -42,6 +42,14 @@ struct Cli {
     /// Set product term disable bits (16V8/20V8 only)
     #[arg(long)]
     ptd: bool,
+
+    /// Run interactive equation optimizer before assembly
+    #[arg(short = 'o', long)]
+    optimize: bool,
+
+    /// Print .chp and .pin files after assembly
+    #[arg(short = 'v', long)]
+    verbose: bool,
 }
 
 fn main() {
@@ -55,8 +63,40 @@ fn main() {
         disable_unused_pt: cli.ptd,
     };
 
+    if cli.optimize {
+        match galette::optimize_interactive(&cli.input) {
+            Ok(galette::OptimizeOutcome::Cancelled) => process::exit(0),
+            Ok(_) => {}
+            Err(e) => {
+                eprintln!("{}", e);
+                process::exit(1);
+            }
+        }
+    }
+
     if let Err(e) = galette::assemble(&cli.input, &config) {
         eprintln!("{}", e);
         process::exit(1);
     }
+
+    if cli.verbose {
+        let base = PathBuf::from(&cli.input);
+        for ext in ["chp", "pin"] {
+            let path = base.with_extension(ext);
+            match fs::read_to_string(&path) {
+                Ok(content) => {
+                    println!("=== {} ===", path.display());
+                    print!("{content}");
+                    if !content.ends_with('\n') {
+                        println!();
+                    }
+                }
+                Err(e) => {
+                    eprintln!("warning: could not read {}: {}", path.display(), e);
+                }
+            }
+        }
+    }
+
+    println!("Assembly complete");
 }

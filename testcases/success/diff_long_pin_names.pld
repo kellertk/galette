@@ -16,7 +16,7 @@ DataOutThree = DataInZero * DataInOne * DataInTwo * DataInThree * DataInFour * D
 
 DESCRIPTION
 
-Long pin names: galette accepts arbitrary-length pin names; the only
-documented side effect is that fixed-width output columns no longer
-align. This fixture pins down both the parsing and the documented
-misalignment.
+Long pin names: galette accepts arbitrary-length pin names. The .pin
+output's Name column auto-sizes to the longest name (with a floor of
+8) so the table stays aligned regardless of name length. This fixture
+exercises both the parsing and the dynamic column width.

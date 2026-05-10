@@ -116,6 +116,7 @@ dependencies = [
  "anyhow",
  "clap",
  "itertools",
+ "quine-mc_cluskey",
  "test_bin",
  "thiserror",
 ]
@@ -149,6 +150,12 @@ checksum = "8fd00f0bb2e90d81d1044c2b32617f68fcb9fa3bb7640c23e9c748e53fb30934"
 dependencies = [
  "unicode-ident",
 ]
+
+[[package]]
+name = "quine-mc_cluskey"
+version = "0.2.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "07589615d719a60c8dd8a4622e7946465dfef20d1a428f969e3443e7386d5f45"
 
 [[package]]
 name = "quote"

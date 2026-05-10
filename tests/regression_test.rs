@@ -35,11 +35,11 @@ fn get_plds(dir: &str) -> Result<Vec<String>> {
 }
 
 fn check_invocation_succeeded(name: &str, res: std::process::Output) {
-    assert!(
-        res.stdout.is_empty(),
+    let stdout = std::str::from_utf8(&res.stdout).unwrap();
+    assert_eq!(
+        stdout, "Assembly complete\n",
         "'{:?}' produced unexpected output to stdout: {:?}",
-        name,
-        std::str::from_utf8(&res.stdout).unwrap()
+        name, stdout
     );
     assert!(
         res.stderr.is_empty(),
@@ -203,10 +203,11 @@ fn test_ptd_warns_on_22v10() -> Result<()> {
         .args(["--ptd", "GAL22V10_combinatorial.pld"])
         .output()?;
 
-    assert!(
-        results.stdout.is_empty(),
+    let stdout = std::str::from_utf8(&results.stdout).unwrap();
+    assert_eq!(
+        stdout, "Assembly complete\n",
         "unexpected stdout: {:?}",
-        std::str::from_utf8(&results.stdout).unwrap()
+        stdout
     );
     assert!(results.status.success(), "command failed");
     let stderr = std::str::from_utf8(&results.stderr).unwrap();

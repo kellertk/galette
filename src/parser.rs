@@ -29,6 +29,7 @@ pub struct Content {
 #[derive(Clone, Debug, PartialEq)]
 pub struct Equation {
     pub line_num: LineNum,
+    pub end_line: LineNum,
     pub lhs: LHS,
     pub rhs: Vec<Pin>,
     pub is_or: Vec<bool>,
@@ -354,7 +355,11 @@ fn lookup_pin(
 }
 
 // Read a pin on the RHS (where suffices are not allowed), and convert to pin number.
-fn parse_pin<I>(chip: Chip, pin_map: &HashMap<String, Pin>, iter: &mut I) -> Result<Pin, Error>
+fn parse_pin<I>(
+    chip: Chip,
+    pin_map: &HashMap<String, Pin>,
+    iter: &mut I,
+) -> Result<(LineNum, Pin), Error>
 where
     I: Iterator<Item = (LineNum, Token)>,
 {
@@ -363,7 +368,7 @@ where
         if suffix != Suffix::None {
             err(line_num, ErrorCode::BadPinSuffix)
         } else {
-            at_line(line_num, lookup_pin(chip, pin_map, &named_pin))
+            Ok((line_num, at_line(line_num, lookup_pin(chip, pin_map, &named_pin))?))
         }
     } else {
         err(line_num, ErrorCode::BadToken { expected: "pin" })
@@ -424,18 +429,23 @@ where
         return err(line_num, ErrorCode::NoEquals);
     }
 
-    let mut rhs = vec![parse_pin(chip, pin_map, tokens)?];
+    let (mut end_line, first_pin) = parse_pin(chip, pin_map, tokens)?;
+    let mut rhs = vec![first_pin];
     let mut is_or = vec![false];
 
     loop {
         match tokens.next() {
             Some((_, Token::And)) => {
                 is_or.push(false);
-                rhs.push(parse_pin(chip, pin_map, tokens)?);
+                let (pin_line, pin) = parse_pin(chip, pin_map, tokens)?;
+                end_line = pin_line;
+                rhs.push(pin);
             }
             Some((_, Token::Or)) => {
                 is_or.push(true);
-                rhs.push(parse_pin(chip, pin_map, tokens)?);
+                let (pin_line, pin) = parse_pin(chip, pin_map, tokens)?;
+                end_line = pin_line;
+                rhs.push(pin);
             }
             Some((token_line_num, _)) => {
                 return err(
@@ -451,6 +461,7 @@ where
 
     Ok(Equation {
         line_num,
+        end_line,
         lhs,
         rhs,
         is_or,
