@@ -12,7 +12,6 @@ use std::path::Path;
 use std::process::Command;
 
 use anyhow::{Result, bail};
-use test_bin::get_test_bin;
 
 fn ensure_dir_exists(name: &str) -> Result<()> {
     if Path::new(name).exists() {
@@ -175,7 +174,7 @@ fn test_successful_generation() -> Result<()> {
             format!("test_temp_success/{}", name),
         )?;
 
-        let results = get_test_bin("galette")
+        let results = test_bin::get_test_bin!("galette")
             .current_dir("test_temp_success")
             .arg(name)
             .output()?;
@@ -198,7 +197,7 @@ fn test_ptd_warns_on_22v10() -> Result<()> {
         "test_temp_ptd_warn/GAL22V10_combinatorial.pld",
     )?;
 
-    let results = get_test_bin("galette")
+    let results = test_bin::get_test_bin!("galette")
         .current_dir("test_temp_ptd_warn")
         .args(["--ptd", "GAL22V10_combinatorial.pld"])
         .output()?;
@@ -241,7 +240,7 @@ fn test_ptd() -> Result<()> {
         "test_temp_ptd/sparse_16v8.pld",
     )?;
 
-    let results = get_test_bin("galette")
+    let results = test_bin::get_test_bin!("galette")
         .current_dir("test_temp_ptd")
         .args(["--ptd", "sparse_16v8.pld"])
         .output()?;
@@ -262,7 +261,7 @@ fn test_security_bit() -> Result<()> {
         "test_temp_security/security_bit.pld",
     )?;
 
-    let results = get_test_bin("galette")
+    let results = test_bin::get_test_bin!("galette")
         .current_dir("test_temp_security")
         .args(["-s", "security_bit.pld"])
         .output()?;
@@ -596,7 +595,7 @@ fn test_failing_generation() -> Result<()> {
     let mut failure_messages = HashMap::from(FAILURE_MESSAGES);
 
     for name in get_plds("testcases/failure")?.iter() {
-        let results = get_test_bin("galette")
+        let results = test_bin::get_test_bin!("galette")
             .current_dir("testcases/failure")
             .arg(name)
             .output()?;

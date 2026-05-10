@@ -10,7 +10,6 @@ use std::path::Path;
 use std::process::Stdio;
 
 use anyhow::{Result, bail};
-use test_bin::get_test_bin;
 
 const FIXTURE_DIR: &str = "testcases/optimize";
 const FIXTURE_NAME: &str = "non_minimal.pld";
@@ -33,7 +32,7 @@ fn optimize_auto_accepts_writes_and_assembles() -> Result<()> {
         format!("{dir}/{FIXTURE_NAME}"),
     )?;
 
-    let out = get_test_bin("galette")
+    let out = test_bin::get_test_bin!("galette")
         .current_dir(dir)
         .args(["-o", FIXTURE_NAME])
         .stdin(Stdio::null())
@@ -68,7 +67,7 @@ fn optimize_auto_accepts_writes_and_assembles() -> Result<()> {
         format!("{FIXTURE_DIR}/{EXPECTED_NAME}"),
         format!("{direct_dir}/{FIXTURE_NAME}"),
     )?;
-    let direct_out = get_test_bin("galette")
+    let direct_out = test_bin::get_test_bin!("galette")
         .current_dir(&direct_dir)
         .arg(FIXTURE_NAME)
         .output()?;
