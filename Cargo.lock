@@ -136,9 +136,9 @@ checksum = "a6cb138bb79a146c1bd460005623e142ef0181e3d0219cb493e02f7d08a35695"
 
 [[package]]
 name = "itertools"
-version = "0.14.0"
+version = "0.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2b192c782037fadd9cfa75548310488aabdbf3d2da73885b31bd0abd03351285"
+checksum = "8b4baf93f58d4425749ca49a51c50ebab072c5df6994d08fed93541c331481dc"
 dependencies = [
  "either",
 ]
@@ -192,9 +192,9 @@ dependencies = [
 
 [[package]]
 name = "test_bin"
-version = "0.5.0"
+version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9bb39bae54ae361dc14dc820e46f4643f53bc4e5bdd39c2eb5f6fdf1bee00660"
+checksum = "c298c8279870ce560540c9af8e0f0da472487031a9762a5f5512027174dd5c93"
 
 [[package]]
 name = "thiserror"
