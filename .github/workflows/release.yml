@@ -81,8 +81,8 @@ jobs:
       - name: Build and test
         if: steps.check.outputs.should_publish == 'true'
         run: |
-          cargo build --all-targets --verbose
-          cargo test --verbose
+          cargo build --all-targets --verbose --locked
+          cargo test --verbose --locked
 
       - name: Verify package (cargo publish --dry-run)
         if: steps.check.outputs.should_publish == 'true'
