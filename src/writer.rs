@@ -388,7 +388,7 @@ fn make_fuse(pin_names: &[String], gal: &GAL) -> String {
             "\n\nPin {:>2} = {:<12} {}",
             pin,
             pin_names[pin - 1],
-            &flags
+            flags
         );
 
         for _ in 0..chip.num_rows_for_olmc(olmc) {

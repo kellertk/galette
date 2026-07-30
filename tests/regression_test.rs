@@ -116,12 +116,15 @@ fn normalize_for_comparison(filename: &str, content: &str) -> String {
     // The JEDEC transmission checksum is the file's final non-empty
     // line: a leading ETX (0x03) byte followed by four lowercase hex
     // digits.
-    if let Some(last) = lines.iter_mut().rfind(|l| !l.is_empty())
-        && last.len() == 5
-        && last.starts_with('\x03')
-        && last[1..].chars().all(|c| c.is_ascii_hexdigit())
-    {
-        *last = "<normalised-checksum>".to_string();
+    // Nested `if` rather than a let-chain to keep the MSRV at 1.85
+    // (let-chains need rustc 1.88+).
+    if let Some(last) = lines.iter_mut().rfind(|l| !l.is_empty()) {
+        if last.len() == 5
+            && last.starts_with('\x03')
+            && last[1..].chars().all(|c| c.is_ascii_hexdigit())
+        {
+            *last = "<normalised-checksum>".to_string();
+        }
     }
     lines.join("\n")
 }
