@@ -69,11 +69,11 @@ pub fn optimize_term(term: &Term, allow_flip: bool) -> Option<Optimized> {
         best = Choice::OrigPolarity;
         best_pl = (p_orig, l_orig);
     }
-    if let Some((_, p_flip, l_flip)) = &flip_candidate
-        && (*p_flip, *l_flip) < best_pl
-    {
-        best = Choice::Flipped;
-        best_pl = (*p_flip, *l_flip);
+    if let Some((_, p_flip, l_flip)) = &flip_candidate {
+        if (*p_flip, *l_flip) < best_pl {
+            best = Choice::Flipped;
+            best_pl = (*p_flip, *l_flip);
+        }
     }
 
     match best {
